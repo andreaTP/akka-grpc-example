@@ -4,6 +4,7 @@ import scala.concurrent.Future
 import akka.actor.ActorSystem
 import akka.http.scaladsl._
 import akka.http.scaladsl.model._
+// import akka.http.scaladsl.UseHttp2.Always
 import akka.stream.ActorMaterializer
 import akka.stream.Materializer
 import com.typesafe.config.ConfigFactory
@@ -21,11 +22,21 @@ object GreeterServer {
     val service: HttpRequest => Future[HttpResponse] =
       io.grpc.examples.GreeterServiceHandler(new GreeterServiceImpl(mat))
 
-    Http().bindAndHandleAsync(
+    // Http2().bindAndHandleAsync(
+    //   service,
+    //   interface = "127.0.0.1",
+    //   port = 8080,
+    //   connectionContext = HttpConnectionContext(http2 = Always)
+    // )
+    Http2().bindAndHandleAsync(
       service,
       interface = "127.0.0.1",
-      port = 8080
+      port = 8080,
+      httpsContext = new HttpsConnectionContext(javax.net.ssl.SSLContext.getDefault())
     )
+    // ,
+    //   connectionContext = HttpConnectionContext(http2 = Always)
+    // )
     .foreach { binding =>
       println(s"GRPC server bound to: ${binding.localAddress}")
     }
